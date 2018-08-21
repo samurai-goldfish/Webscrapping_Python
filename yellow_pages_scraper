@@ -1,0 +1,74 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+
+# Enter Search Term
+search_terms = "Strippers"
+# Enter Location
+location = "New Orleans, LA"
+all_data = []
+
+if ' ' in search_terms:
+    search_terms = search_terms.replace(' ', '+')
+    print(search_terms)
+if ', ' in location:
+    location = location.replace(', ', '+')
+    location = location.replace(' ', '+')
+    print(location)
+count = 1
+
+while True:
+    page_number = str(count)
+    url = "https://www.yellowpages.com/search?search_terms="+search_terms+"&geo_location_terms="+location+"&page="+page_number
+    print(url)
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    info = soup.findAll("div", {"class": "info"})
+    if soup.findAll("div", {"class": "info"}):
+        count = count+1
+        for each in info:
+            try:
+                business_name = each.find(itemprop="name").get_text()
+            except:
+                business_name = "No Business Name"
+            try:
+                street = each.find(itemprop="streetAddress").get_text()
+            except:
+                street = "No Street Address"
+            try:
+                city = each.find(itemprop="addressLocality").get_text()
+            except:
+                city = "No City,"
+            try:
+                state = each.find(itemprop="addressRegion").get_text()
+            except:
+                state = "No State"
+            try:
+                zip = each.find(itemprop="postalCode").get_text()
+            except:
+                zip = "No Zip Code"
+            try:
+                telephone = each.find(itemprop="telephone").get_text()
+            except:
+                telephone = "No Telephone"
+            city = city.replace(u'\xa0', u'')
+            city = city.replace(',','')
+            state = state.replace(u'\xa0', u'')
+            all_data.append([business_name,street,city,state,zip,telephone])
+
+
+
+
+
+    else:
+        break
+search_terms = search_terms.replace('+', ' ')
+location = location.replace('+',' ')
+file_location = search_terms+', '+location+'.csv'
+print(file_location)
+with open(search_terms+', '+location+'.csv', 'w+') as wf:
+    csv_writer = csv.writer(wf)
+    csv_writer.writerow(["Business Name","Street Address", "City", "State", "Zip", "Telephone"])
+    for line in all_data:
+        csv_writer.writerow(line)
+        print(line)
